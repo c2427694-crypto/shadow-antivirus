@@ -758,8 +758,8 @@ CURRENT_VERSION = "1.1.0"
 
 # YOUR GITHUB RAW URL - update this after setup
 # Format: https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/ShadowAntivirus.pyw
-GITHUB_RAW_URL  = "https://raw.githubusercontent.com/YOUR_USERNAME/shadow-antivirus/main/ShadowAntivirus.pyw"
-GITHUB_VER_URL  = "https://raw.githubusercontent.com/YOUR_USERNAME/shadow-antivirus/main/version.txt"
+GITHUB_RAW_URL  = "https://raw.githubusercontent.com/c2427694-crypto/shadow-antivirus/main/ShadowAntivirus.pyw"
+GITHUB_VER_URL  = "https://raw.githubusercontent.com/c2427694-crypto/shadow-antivirus/main/version.txt"
 
 
 class AutoUpdater:
