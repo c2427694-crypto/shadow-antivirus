@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Antivirus — Detects What's Hidden</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #000000;
+  --bg2:      #050508;
+  --bg3:      #0a0a12;
+  --accent:   #00d4ff;
+  --accent2:  #0066ff;
+  --danger:   #ff2244;
+  --success:  #00ff88;
+  --text:     #ffffff;
+  --subtext:  #8899aa;
+  --border:   rgba(0,212,255,0.15);
+  --card:     rgba(255,255,255,0.03);
+  --glow:     0 0 40px rgba(0,212,255,0.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 60px;
+  backdrop-filter: blur(20px);
+  background: rgba(0,0,0,0.7);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-logo-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.nav-logo-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--subtext);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--accent); }
+
+.nav-cta {
+  background: var(--accent);
+  color: #000 !important;
+  padding: 10px 24px;
+  border-radius: 4px;
+  font-weight: 700 !important;
+  transition: all 0.2s !important;
+}
+
+.nav-cta:hover {
+  background: #fff !important;
+  color: #000 !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.4) !important;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 120px 40px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Animated grid background */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+  animation: grid-move 20s linear infinite;
+}
+
+@keyframes grid-move {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(60px); }
+}
+
+/* Glowing orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orb-pulse 6s ease-in-out infinite;
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,100,255,0.12), transparent 70%);
+  top: -100px; left: -100px;
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,212,255,0.1), transparent 70%);
+  top: 20%; right: -100px;
+  animation-delay: 2s;
+}
+.orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,34,68,0.06), transparent 70%);
+  bottom: 10%; left: 30%;
+  animation-delay: 4s;
+}
+
+@keyframes orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.2); opacity: 1; }
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.3);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 32px;
+  animation: fade-up 0.6s ease both;
+}
+
+.badge-dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.hero h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(56px, 9vw, 120px);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  animation: fade-up 0.6s 0.1s ease both;
+}
+
+.hero h1 .line-1 { display: block; color: var(--text); }
+.hero h1 .line-2 {
+  display: block;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-slogan {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: var(--subtext);
+  letter-spacing: 3px;
+  margin-bottom: 48px;
+  animation: fade-up 0.6s 0.2s ease both;
+}
+
+.hero-slogan span { color: var(--accent); }
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fade-up 0.6s 0.3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent);
+  color: #000;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 16px 36px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+}
+
+.btn-primary:hover::before { transform: translateX(100%); }
+
+.btn-primary:hover {
+  box-shadow: 0 0 40px rgba(0,212,255,0.5), 0 0 80px rgba(0,212,255,0.2);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 16px 36px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: inset 0 0 20px rgba(0,212,255,0.05);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 60px;
+  justify-content: center;
+  margin-top: 80px;
+  animation: fade-up 0.6s 0.4s ease both;
+}
+
+.stat { text-align: center; }
+.stat-number {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--subtext);
+  margin-top: 4px;
+}
+
+/* Hero shield */
+.hero-shield {
+  position: absolute;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.07;
+  width: 400px;
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%       { transform: translateY(-52%) translateX(-10px); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SCAN DEMO ── */
+.scan-demo {
+  padding: 80px 60px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.scan-demo-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  color: var(--subtext);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 600px;
+  margin-bottom: 48px;
+}
+
+.terminal {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--glow);
+}
+
+.terminal-bar {
+  background: rgba(255,255,255,0.05);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.terminal-dot-r { background: #ff5f57; }
+.terminal-dot-y { background: #febc2e; }
+.terminal-dot-g { background: #28c840; }
+
+.terminal-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--subtext);
+  margin-left: 8px;
+}
+
+.terminal-body {
+  padding: 24px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  line-height: 2;
+}
+
+.t-line { display: flex; gap: 12px; }
+.t-time { color: #334455; min-width: 80px; }
+.t-module { color: #0066ff; min-width: 200px; }
+.t-ok { color: var(--success); }
+.t-warn { color: #ffaa00; }
+.t-danger { color: var(--danger); font-weight: bold; }
+.t-info { color: var(--accent); }
+.t-sep { border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0; }
+
+.scan-lines .t-line {
+  opacity: 0;
+  animation: line-appear 0.2s ease forwards;
+}
+.scan-lines .t-line:nth-child(1)  { animation-delay: 0.3s; }
+.scan-lines .t-line:nth-child(2)  { animation-delay: 0.5s; }
+.scan-lines .t-line:nth-child(3)  { animation-delay: 0.7s; }
+.scan-lines .t-line:nth-child(4)  { animation-delay: 0.9s; }
+.scan-lines .t-line:nth-child(5)  { animation-delay: 1.1s; }
+.scan-lines .t-line:nth-child(6)  { animation-delay: 1.3s; }
+.scan-lines .t-line:nth-child(7)  { animation-delay: 1.5s; }
+.scan-lines .t-line:nth-child(8)  { animation-delay: 1.7s; }
+.scan-lines .t-line:nth-child(9)  { animation-delay: 1.9s; }
+.scan-lines .t-line:nth-child(10) { animation-delay: 2.1s; }
+.scan-lines .t-line:nth-child(11) { animation-delay: 2.3s; }
+.scan-lines .t-line:nth-child(12) { animation-delay: 2.5s; }
+.scan-lines .t-line:nth-child(13) { animation-delay: 2.7s; }
+
+@keyframes line-appear {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── FEATURES ── */
+.features {
+  padding: 120px 60px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-top: 60px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.feature-card {
+  background: var(--card);
+  padding: 40px 36px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  cursor: default;
+}
+
+.feature-card:nth-child(3n) { border-right: none; }
+.feature-card:nth-last-child(-n+3) { border-bottom: none; }
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover { background: rgba(0,212,255,0.04); }
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.feature-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.feature-desc {
+  font-size: 14px;
+  color: var(--subtext);
+  line-height: 1.7;
+}
+
+.feature-tag {
+  display: inline-block;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 3px;
+  margin-top: 16px;
+}
+
+/* ── MODULES ── */
+.modules {
+  padding: 120px 60px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.modules-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 60px;
+}
+
+.module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px 20px;
+  text-align: center;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.module-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.module-card:hover { border-color: rgba(0,212,255,0.4); transform: translateY(-4px); }
+.module-card:hover::after { transform: scaleX(1); }
+
+.module-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.module-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+/* ── GAMING MODE ── */
+.gaming-section {
+  padding: 120px 60px;
+  max-width: 1300px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.gaming-visual {
+  position: relative;
+}
+
+.gaming-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gaming-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(0,100,255,0.03));
+}
+
+.gaming-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.gaming-status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 10px var(--success);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.gaming-status-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--success);
+  letter-spacing: 1px;
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.game-item:hover { border-color: var(--border); background: rgba(0,212,255,0.04); }
+
+.game-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.game-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+.badge-ignored { background: rgba(0,255,136,0.1); color: var(--success); }
+.badge-scanning { background: rgba(0,212,255,0.1); color: var(--accent); }
+
+/* ── DOWNLOAD ── */
+.download {
+  padding: 120px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+}
+
+.download-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,212,255,0.05), transparent);
+}
+
+.download-inner {
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.download-shield {
+  font-size: 80px;
+  margin-bottom: 32px;
+  display: block;
+  filter: drop-shadow(0 0 30px rgba(0,212,255,0.4));
+  animation: float 4s ease-in-out infinite;
+}
+
+.download h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+
+.download-sub {
+  color: var(--subtext);
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+}
+
+.download-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+.download-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--subtext);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.download-meta-item span:first-child { color: var(--accent); }
+
+.requirements {
+  margin-top: 48px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 32px;
+  text-align: left;
+}
+
+.req-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.req-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  list-style: none;
+}
+
+.req-list li {
+  font-size: 13px;
+  color: var(--subtext);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.req-list li::before {
+  content: '›';
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 48px 60px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: gap;
+}
+
+.footer-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--subtext);
+}
+
+.footer-logo span { color: var(--accent); }
+
+.footer-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--subtext);
+  letter-spacing: 1px;
+}
+
+.footer-disclaimer {
+  font-size: 11px;
+  color: #334455;
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ── SCROLL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .hero-stats { gap: 32px; }
+  .hero-shield { display: none; }
+  .features, .modules, .download, .gaming-section { padding: 80px 24px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .modules-grid { grid-template-columns: repeat(2, 1fr); }
+  .gaming-section { grid-template-columns: 1fr; }
+  .req-list { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg class="nav-logo-icon" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18 2L34 8V20C34 30 26 39 18 42C10 39 2 30 2 20V8L18 2Z" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+      <path d="M18 8L28 12V20C28 26 23 32 18 34C13 32 8 26 8 20V12L18 8Z" fill="none" stroke="rgba(0,212,255,0.4)" stroke-width="1"/>
+      <rect x="14" y="20" width="8" height="7" rx="1" fill="#00d4ff"/>
+      <path d="M14 20V16C14 13.8 15.8 12 18 12C20.2 12 22 13.8 22 16V20" stroke="#00d4ff" stroke-width="2"/>
+      <circle cx="18" cy="23" r="1.5" fill="#000"/>
+    </svg>
+    <span class="nav-logo-text">Shadow</span>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#modules">Detection</a></li>
+    <li><a href="#gaming">Gaming</a></li>
+    <li><a href="#download" class="nav-cta">Download Free</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <svg class="hero-shield" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 10L190 40V110C190 165 150 210 100 230C50 210 10 165 10 110V40L100 10Z" fill="white"/>
+  </svg>
+
+  <div class="hero-badge">
+    <div class="badge-dot"></div>
+    Real-time Protection Active
+  </div>
+
+  <h1>
+    <span class="line-1">Shadow</span>
+    <span class="line-2">Antivirus</span>
+  </h1>
+
+  <p class="hero-slogan">Detects <span>what's hidden.</span></p>
+
+  <div class="hero-buttons">
+    <a href="#download" class="btn-primary">
+      ⬇ Download Free
+    </a>
+    <a href="#features" class="btn-secondary">
+      See Features →
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-number">15</div>
+      <div class="stat-label">Detection Modules</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">100%</div>
+      <div class="stat-label">Free Forever</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">3</div>
+      <div class="stat-label">Platforms</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Ads Ever</div>
+    </div>
+  </div>
+</section>
+
+<!-- SCAN DEMO -->
+<section class="scan-demo">
+  <div class="scan-demo-inner reveal">
+    <p class="section-label">// Live Detection</p>
+    <h2 class="section-title">Watch it work</h2>
+    <p class="section-sub">Shadow runs 15 detection modules simultaneously. Here's what a real scan looks like.</p>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot terminal-dot-r"></div>
+        <div class="terminal-dot terminal-dot-y"></div>
+        <div class="terminal-dot terminal-dot-g"></div>
+        <span class="terminal-title">shadow_scan — suspicious_file.exe</span>
+      </div>
+      <div class="terminal-body scan-lines">
+        <div class="t-line"><span class="t-time">14:32:01</span><span class="t-module">Hash Scanner</span><span class="t-ok">✓ Not in known malware DB</span></div>
+        <div class="t-line"><span class="t-time">14:32:01</span><span class="t-module">Signature Scanner</span><span class="t-ok">✓ No signatures matched</span></div>
+        <div class="t-line"><span class="t-time">14:32:02</span><span class="t-module">PE Header Analyzer</span><span class="t-warn">⚠ Suspicious imports: VirtualAlloc, WriteProcessMemory</span></div>
+        <div class="t-line"><span class="t-time">14:32:02</span><span class="t-module">String Analyzer</span><span class="t-danger">✗ RAT strings detected: reverse shell, backdoor, clipboard</span></div>
+        <div class="t-line"><span class="t-time">14:32:02</span><span class="t-module">Entropy Analyzer</span><span class="t-warn">⚠ High entropy: 7.92 (packed/encrypted)</span></div>
+        <div class="t-line"><span class="t-time">14:32:03</span><span class="t-module">Network Indicators</span><span class="t-danger">✗ Hardcoded C2 IP: 185.220.101.47:4444</span></div>
+        <div class="t-line"><span class="t-time">14:32:03</span><span class="t-module">Heuristic Analyzer</span><span class="t-danger">✗ Suspicious name pattern detected</span></div>
+        <div class="t-line"><span class="t-time">14:32:03</span><span class="t-module">Ransomware Scanner</span><span class="t-ok">✓ No ransom indicators</span></div>
+        <div class="t-line"><span class="t-time">14:32:04</span><span class="t-module">Exploit Scanner</span><span class="t-ok">✓ No shellcode found</span></div>
+        <div class="t-line"><span class="t-time">14:32:04</span><span class="t-module">Metadata Analyzer</span><span class="t-warn">⚠ Double extension: .pdf.exe</span></div>
+        <div class="t-sep"></div>
+        <div class="t-line"><span class="t-time">14:32:04</span><span class="t-module t-danger">VERDICT</span><span class="t-danger">✗ THREAT — Remote Access Trojan (RAT) — Confidence: 91%</span></div>
+        <div class="t-line"><span class="t-time">14:32:04</span><span class="t-module t-info">ACTION</span><span class="t-info">→ Auto-quarantined to ~/.shadow_quarantine/</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="reveal">
+    <p class="section-label">// Everything you need</p>
+    <h2 class="section-title">Built Different</h2>
+    <p class="section-sub">No subscription. No bloatware. No bullshit. Just real protection that actually works.</p>
+  </div>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <span class="feature-icon">🛡️</span>
+      <h3 class="feature-title">Real-Time Protection</h3>
+      <p class="feature-desc">Monitors your Downloads and Desktop 24/7. New file appears? Scanned instantly before you can even open it.</p>
+      <span class="feature-tag">Always On</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔥</span>
+      <h3 class="feature-title">Firewall Control</h3>
+      <p class="feature-desc">See every active network connection in real-time. Block suspicious apps. Toggle Windows Firewall directly from Shadow.</p>
+      <span class="feature-tag">Network</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🌐</span>
+      <h3 class="feature-title">Browser Protection</h3>
+      <p class="feature-desc">Works with Chrome, Edge, Brave, Opera GX, Opera, and Firefox. Detects unsafe extensions and disabled safe browsing.</p>
+      <span class="feature-tag">6 Browsers</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔒</span>
+      <h3 class="feature-title">Device Security</h3>
+      <p class="feature-desc">Catches malware that creates new Windows users. Auto-removes suspicious accounts before they cause damage.</p>
+      <span class="feature-tag">Background</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🗂️</span>
+      <h3 class="feature-title">Smart Quarantine</h3>
+      <p class="feature-desc">Isolated threats with full metadata — original path, threat type, detection module, SHA256 hash. Keep or delete with one click.</p>
+      <span class="feature-tag">Full Details</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🎨</span>
+      <h3 class="feature-title">Live Themes</h3>
+      <p class="feature-desc">Dark, Light, Aquatic, Sunset, Forest. Switch themes instantly — no restart required. Your antivirus, your style.</p>
+      <span class="feature-tag">5 Themes</span>
+    </div>
+  </div>
+</section>
+
+<!-- DETECTION MODULES -->
+<section class="modules" id="modules">
+  <div class="modules-inner">
+    <div class="reveal">
+      <p class="section-label">// Detection Engine</p>
+      <h2 class="section-title">15 Modules. Zero Compromises.</h2>
+      <p class="section-sub">Every file is analyzed by 15 independent detection modules running simultaneously. Miss nothing.</p>
+    </div>
+
+    <div class="modules-grid reveal">
+      <div class="module-card"><div class="module-num">01</div><div class="module-name">Hash Scanner</div></div>
+      <div class="module-card"><div class="module-num">02</div><div class="module-name">Signature Scanner</div></div>
+      <div class="module-card"><div class="module-num">03</div><div class="module-name">PE Header Analyzer</div></div>
+      <div class="module-card"><div class="module-num">04</div><div class="module-name">String Analyzer</div></div>
+      <div class="module-card"><div class="module-num">05</div><div class="module-name">Script Analyzer</div></div>
+      <div class="module-card"><div class="module-num">06</div><div class="module-name">Entropy Analyzer</div></div>
+      <div class="module-card"><div class="module-num">07</div><div class="module-name">Heuristic Analyzer</div></div>
+      <div class="module-card"><div class="module-num">08</div><div class="module-name">Ransomware Detector</div></div>
+      <div class="module-card"><div class="module-num">09</div><div class="module-name">Network Indicators</div></div>
+      <div class="module-card"><div class="module-num">10</div><div class="module-name">Archive Scanner</div></div>
+      <div class="module-card"><div class="module-num">11</div><div class="module-name">Fileless Malware</div></div>
+      <div class="module-card"><div class="module-num">12</div><div class="module-name">Exploit Scanner</div></div>
+      <div class="module-card"><div class="module-num">13</div><div class="module-name">VirusTotal Cloud</div></div>
+      <div class="module-card"><div class="module-num">14</div><div class="module-name">Metadata Analyzer</div></div>
+      <div class="module-card"><div class="module-num">15</div><div class="module-name">Macro Analyzer</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GAMING MODE -->
+<section id="gaming">
+  <div class="gaming-section">
+    <div class="reveal">
+      <p class="section-label">// For Gamers</p>
+      <h2 class="section-title">Game.<br>Don't Lag.</h2>
+      <p class="section-sub">Shadow detects when you're gaming and automatically pauses heavy scans. Your FPS stays clean, your PC stays protected.</p>
+      <p class="section-sub" style="margin-top: 16px;">Supports CS2, Valorant, Fortnite, Apex, Overwatch, Minecraft, GTA V, and 30+ more games. Detected by process name AND install path — works even with custom launchers.</p>
+      <div style="margin-top: 32px;">
+        <a href="#download" class="btn-primary">Get Shadow Free</a>
+      </div>
+    </div>
+
+    <div class="gaming-visual reveal">
+      <div class="gaming-card">
+        <div class="gaming-status">
+          <div class="gaming-status-dot"></div>
+          <span class="gaming-status-text">GAMING MODE ACTIVE — cs2.exe detected</span>
+        </div>
+        <div class="game-list">
+          <div class="game-item">
+            <span class="game-name">🎮  CS2 / CS:GO</span>
+            <span class="game-badge badge-ignored">IGNORED</span>
+          </div>
+          <div class="game-item">
+            <span class="game-name">🎮  Valorant</span>
+            <span class="game-badge badge-ignored">IGNORED</span>
+          </div>
+          <div class="game-item">
+            <span class="game-name">🎮  Fortnite</span>
+            <span class="game-badge badge-ignored">IGNORED</span>
+          </div>
+          <div class="game-item">
+            <span class="game-name">🎮  Apex Legends</span>
+            <span class="game-badge badge-ignored">IGNORED</span>
+          </div>
+          <div class="game-item">
+            <span class="game-name">🌐  chrome.exe</span>
+            <span class="game-badge badge-scanning">SCANNING</span>
+          </div>
+          <div class="game-item">
+            <span class="game-name">📁  Downloads folder</span>
+            <span class="game-badge badge-scanning">SCANNING</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section class="download" id="download">
+  <div class="download-bg"></div>
+  <div class="download-inner reveal">
+    <span class="download-shield">🛡️</span>
+
+    <h2>Download<br>Shadow Free</h2>
+    <p class="download-sub">No subscription. No credit card. No ads. Ever.<br>Just install and you're protected.</p>
+
+    <a href="https://github.com/c2427694-crypto/shadow-antivirus/releases/latest/download/ShadowAntivirus.pyw" download class="btn-primary" style="font-size:18px; padding: 20px 48px;">
+      ⬇ Download for Windows
+    </a>
+
+    <div class="download-meta">
+      <div class="download-meta-item"><span>✓</span><span>Windows 10/11</span></div>
+      <div class="download-meta-item"><span>✓</span><span>Python 3.8+</span></div>
+      <div class="download-meta-item"><span>✓</span><span>100% Free</span></div>
+      <div class="download-meta-item"><span>✓</span><span>No Ads</span></div>
+      <div class="download-meta-item"><span>✓</span><span>Open Source</span></div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <a href="https://github.com/c2427694-crypto/shadow-antivirus" 
+         target="_blank"
+         style="color: var(--subtext); font-size:13px; text-decoration:none; font-family:'Share Tech Mono',monospace; letter-spacing:1px;">
+        ⭐ View on GitHub → github.com/c2427694-crypto/shadow-antivirus
+      </a>
+    </div>
+
+    <div class="requirements">
+      <p class="req-title">// Quick Setup</p>
+      <ul class="req-list">
+        <li>Install Python from python.org</li>
+        <li>Check "Add Python to PATH"</li>
+        <li>Download ShadowAntivirus.pyw above</li>
+        <li>Double-click it — installs itself!</li>
+        <li>Or run: python ShadowAntivirus.pyw</li>
+        <li>You're protected! 🛡️</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Shadow <span>Antivirus</span></div>
+  <div class="footer-text">// Detects what's hidden</div>
+  <div class="footer-text">Free. Always.</div>
+</footer>
+
+<div class="footer-disclaimer" style="padding: 20px 60px; background: var(--bg);">
+  Shadow Antivirus is an educational project. For maximum protection, use alongside established antivirus software.
+</div>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Animated counter
+function animateCounter(el, target, duration = 1500) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) {
+      el.textContent = target + (el.dataset.suffix || '');
+      clearInterval(timer);
+    } else {
+      el.textContent = Math.floor(start) + (el.dataset.suffix || '');
+    }
+  }, 16);
+}
+
+// Trigger counters when stats are visible
+const statsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const nums = e.target.querySelectorAll('.stat-number');
+      nums.forEach(n => {
+        const val = parseInt(n.textContent);
+        if (!isNaN(val) && val > 1) animateCounter(n, val);
+      });
+      statsObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+const statsEl = document.querySelector('.hero-stats');
+if (statsEl) statsObserver.observe(statsEl);
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// Nav background on scroll
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  nav.style.borderBottomColor = window.scrollY > 50
+    ? 'rgba(0,212,255,0.2)'
+    : 'rgba(0,212,255,0.08)';
+});
+</script>
+</body>
+</html>
